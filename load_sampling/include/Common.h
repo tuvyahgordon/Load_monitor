@@ -3,19 +3,40 @@
 #include <Arduino.h>           
 #include "freertos/FreeRTOS.h"    // defines BaseType_t, TickType_t, etc.
 #include "freertos/queue.h"       // defines QueueHandle_t
-struct StatsSnapshot
+#include "config.h"
+
+// Max supported in code 
+static constexpr int MAX_CT = 2;
+
+struct SignalSnapshot
 {
     uint32_t n;
     double   sum;
     double   sum_sq;
 };
 
-struct MetricsSnapshot 
+struct PowerChannelSnapshot : SignalSnapshot
 {
-    uint32_t n;
-    double mean; // possibly take out later, if not needed
-    double rms;     // unbiased/AC RMS
-    double t_ms; // time of snapshot
+    float    sum_p;   // sum of v*i
+};
+struct NodeStatsSnapshot
+{
+    uint32_t t_ms;                 // end-of-window timestamp (millis)
+    PowerChannelSnapshot ct[MAX_CT];      // if no voltage, will leave sum_p empty
+#if HAS_VOLTAGE
+    SignalSnapshot v;               // voltage channel stats
+#endif
+};
+
+struct NodeMetricsSnapshot 
+{
+     uint32_t  t_ms; // time of snapshot
+    double irms[MAX_CT];     // unbiased/AC RMS
+    double apparpower[MAX_CT]; // calculated with given mains, or V if sampled
+#if HAS_VOLTAGE 
+    double vrms;
+    double power[MAX_CT];  // calculated with V*I
+#endif
 };
 
 struct AveragerArgs {

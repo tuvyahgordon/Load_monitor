@@ -6,8 +6,8 @@
 
 
  void setup() {
-  QueueHandle_t statsQueue = xQueueCreate(4, sizeof(StatsSnapshot));
-  QueueHandle_t metricsQueue = xQueueCreate(4, sizeof(MetricsSnapshot));
+  QueueHandle_t statsQueue = xQueueCreate(4, sizeof(NodeStatsSnapshot));
+  QueueHandle_t metricsQueue = xQueueCreate(4, sizeof(NodeMetricsSnapshot));
   static AveragerArgs avgArgs;
     avgArgs.q_in = statsQueue;
     avgArgs.q_out = metricsQueue;

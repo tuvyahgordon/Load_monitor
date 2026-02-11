@@ -1,6 +1,7 @@
 #include "Publisher.h"
 #include "Common.h"
 #include "secrets.h"
+#include "Config.h"
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -70,7 +71,7 @@ void publisherTask(void* arg)
             vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
-    MetricsSnapshot m{};
+    NodeMetricsSnapshot m{};
 
     for (;;)
     {
@@ -86,14 +87,31 @@ void publisherTask(void* arg)
             // Build JSON payload
             // Note: snprintf with %.3f is supported on ESP32 (newlib)
             char payload[192];
-            const unsigned long t_ms = (unsigned long)m.t_ms;
-            const unsigned long n    = (unsigned long)m.n;
 
-            snprintf(payload, sizeof(payload),
-                     "{\"t_ms\":%lu,\"n\":%lu,\"mean\":%.3f,\"rms_ac\":%.3f}",
-                     t_ms, n, m.mean, m.rms);
+            int len =snprintf(payload, sizeof(payload),
+                     "{\"t_ms\":%lu",
+                     m.t_ms);
+                     
+                 // add CT channels (1 or 2)
+            for (int i = 0; i < CT_COUNT; i++)
+            {
+                len += snprintf(payload + len, sizeof(payload) - len,
+                    ",\"ct%d\":%.3f,\"ct%d irms\":%.3f,\"ct%d apparpower\":%.3f",
+                    i + 1,
+                    m.irms[i],
+                    m.apparpower[i]);
 
-            // Publish
+
+                 // add voltage only if it exists
+#if HAS_VOLTAGE
+                    len += snprintf(payload + len, sizeof(payload) - len,
+                    ",\"vrms\":%.3f,\"power\":%.3f",
+                    m.vrms, m.power[i]);
+#endif
+            }
+// close JSON
+snprintf(payload + len, sizeof(payload) - len, "}");    
+                     // Publish
             mqtt.publish(MQTT_TOPIC, payload, MQTT_RETAIN);
         }
     }
