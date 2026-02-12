@@ -86,7 +86,7 @@ void publisherTask(void* arg)
 
             // Build JSON payload
             // Note: snprintf with %.3f is supported on ESP32 (newlib)
-            char payload[192];
+            char payload[512];
 
             int len =snprintf(payload, sizeof(payload),
                      "{\"t_ms\":%lu",
@@ -96,23 +96,35 @@ void publisherTask(void* arg)
             for (int i = 0; i < CT_COUNT; i++)
             {
                 len += snprintf(payload + len, sizeof(payload) - len,
-                    ",\"ct%d\":%.3f,\"ct%d irms\":%.3f,\"ct%d apparpower\":%.3f",
+                    ",\"ct%d_irms\":%.3f,\"ct%d_apparpower\":%.3f",
                     i + 1,
                     m.irms[i],
+                    i + 1,
                     m.apparpower[i]);
 
 
                  // add voltage only if it exists
 #if HAS_VOLTAGE
                     len += snprintf(payload + len, sizeof(payload) - len,
-                    ",\"vrms\":%.3f,\"power\":%.3f",
-                    m.vrms, m.power[i]);
+                    ",\"ct%d_power\":%.3f",
+                    i + 1, m.power[i]);
 #endif
             }
+#if HAS_VOLTAGE
+// add rms voltage ONCE
+            len += snprintf(payload + len, sizeof(payload) - len,
+            ",\"vrms\":%.3f", m.vrms);
+#endif
 // close JSON
-snprintf(payload + len, sizeof(payload) - len, "}");    
-                     // Publish
-            mqtt.publish(MQTT_TOPIC, payload, MQTT_RETAIN);
+            snprintf(payload + len, sizeof(payload) - len, "}");    
+        
+        // Publish check for overflow
+        if (len >= sizeof(payload)) {
+        Serial.println("JSON overflow!");
+        return;
+        }
+        // Publish to MQTT
+        mqtt.publish(MQTT_TOPIC, payload, MQTT_RETAIN);
         }
     }
 }
