@@ -88,41 +88,45 @@ void publisherTask(void* arg)
             // Note: snprintf with %.3f is supported on ESP32 (newlib)
             char payload[512];
 
-            int len =snprintf(payload, sizeof(payload),
-                     "{\"t_ms\":%lu",
-                     m.t_ms);
+            int len = 0;
+            int w = snprintf(payload + len, sizeof(payload) - len, "{\"t_ms\":%lu", (unsigned long)m.t_ms);
+            if (w < 0 || w >= (int)(sizeof(payload) - len)) { Serial.println("JSON overflow!"); continue; }
+            len += w;
                      
                  // add CT channels (1 or 2)
             for (int i = 0; i < CT_COUNT; i++)
             {
-                len += snprintf(payload + len, sizeof(payload) - len,
+                w = snprintf(payload + len, sizeof(payload) - len,
                     ",\"ct%d_irms\":%.3f,\"ct%d_apparpower\":%.3f",
                     i + 1,
                     m.irms[i],
                     i + 1,
                     m.apparpower[i]);
-
+                if (w < 0 || w >= (int)(sizeof(payload) - len)) { Serial.println("JSON overflow!"); continue; }
+                len += w;
 
                  // add voltage only if it exists
 #if HAS_VOLTAGE
-                    len += snprintf(payload + len, sizeof(payload) - len,
+                    w = snprintf(payload + len, sizeof(payload) - len,
                     ",\"ct%d_power\":%.3f",
                     i + 1, m.power[i]);
+                    if (w < 0 || w >= (int)(sizeof(payload) - len)) { Serial.println("JSON overflow!"); continue; }
+                    len += w;
 #endif
+
             }
 #if HAS_VOLTAGE
 // add rms voltage ONCE
-            len += snprintf(payload + len, sizeof(payload) - len,
+            w = snprintf(payload + len, sizeof(payload) - len,
             ",\"vrms\":%.3f", m.vrms);
+            if (w < 0 || w >= (int)(sizeof(payload) - len)) { Serial.println("JSON overflow!"); continue; }
+            len += w;
 #endif
 // close JSON
-            snprintf(payload + len, sizeof(payload) - len, "}");    
-        
-        // Publish check for overflow
-        if (len >= sizeof(payload)) {
-        Serial.println("JSON overflow!");
-        return;
-        }
+            // check for overflow
+            w = snprintf(payload + len, sizeof(payload) - len, "}");    
+            if (w < 0 || w >= (int)(sizeof(payload) - len)) { Serial.println("JSON overflow!"); continue; }
+            len += w;
         // Publish to MQTT
         mqtt.publish(MQTT_TOPIC, payload, MQTT_RETAIN);
         }
