@@ -1,7 +1,11 @@
 #pragma once
 
+#ifndef MQTT_BASE_TOPIC
+#define MQTT_BASE_TOPIC "home/load_meter"
+#endif
+
 #ifndef NODE_ID
-#define NODE_ID "node"
+#define NODE_ID "node_unknown"
 #endif
 
 #ifndef CT_COUNT

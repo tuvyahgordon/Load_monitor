@@ -17,7 +17,7 @@ struct SignalSnapshot
 
 struct PowerChannelSnapshot : SignalSnapshot
 {
-    float    sum_p;   // sum of v*i
+    double   sum_p;   // sum of v*i, still in ADC units, but can be used for power factor or real power if voltage is sampled.
 };
 struct NodeStatsSnapshot
 {

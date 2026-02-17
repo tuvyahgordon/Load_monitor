@@ -55,7 +55,7 @@ void samplerTask(void* arg) // freeRTOS task, arg will be NULL
             // ---- Sample ----
 #if HAS_VOLTAGE
             {
-                float rawv = (float)analogRead(V_PIN);
+                 = (float)analogRead(V_PIN);
                 v_sum    += rawv;
                 v_sum_sq += rawv * rawv;
             }
@@ -66,9 +66,12 @@ void samplerTask(void* arg) // freeRTOS task, arg will be NULL
                 float rawi = (float)analogRead(CT_PINS[i]);
                 ct_sum[i]    += rawi;
                 ct_sum_sq[i] += rawi * rawi;
+#if HAS_VOLTAGE
                 ct_sum_p[i] += rawi *rawv;
+#endif
             }
-            
+            // ---- End sample ----
+            }
            
 
             n++;
@@ -84,7 +87,9 @@ void samplerTask(void* arg) // freeRTOS task, arg will be NULL
                     snap.ct[i].n      = n;   
                     snap.ct[i].sum    = ct_sum[i];
                     snap.ct[i].sum_sq = ct_sum_sq[i];
+#if HAS_VOLTAGE
                     snap.ct[i].sum_p = ct_sum_p[i];
+#endif
                 }
 
 #if HAS_VOLTAGE
@@ -100,7 +105,9 @@ void samplerTask(void* arg) // freeRTOS task, arg will be NULL
                 {
                     ct_sum[i] = 0.0;
                     ct_sum_sq[i] = 0.0;
+#if HAS_VOLTAGE
                     ct_sum_p[i] = 0.0;
+#endif
                 }
 #if HAS_VOLTAGE
                 v_sum = 0.0;
@@ -109,6 +116,5 @@ void samplerTask(void* arg) // freeRTOS task, arg will be NULL
             }
             // Yield so other tasks can run
             taskYIELD();
-        }
     }
 }

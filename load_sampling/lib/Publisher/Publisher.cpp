@@ -5,12 +5,10 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <time.h>
 
 
 // -------------------- CONFIG --------------------
-
-// Topic to publish to
-static const char* MQTT_TOPIC = "home/energy/ct1";
 
 // Optional: to set if the broker requires auth
 static const char* MQTT_USER = nullptr;  // "user"
@@ -38,6 +36,18 @@ static void ensure_wifi()
     }
 }
 
+static void sync_time()
+{
+    configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+
+    time_t now = time(nullptr);
+    while (now < 100000)
+    {
+        vTaskDelay(pdMS_TO_TICKS(500));
+        now = time(nullptr);
+    }
+}
+
 static void ensure_mqtt()
 {
     mqtt.setServer(MQTT_HOST, MQTT_PORT);
@@ -62,6 +72,15 @@ static void ensure_mqtt()
     }
 }
 
+static char mqtt_topic[128];
+
+static const char* buildTopic(const char* suffix)
+{
+    // e.g. "home/load_meter/node_main/metrics"
+    snprintf(mqtt_topic, sizeof(mqtt_topic), "%s/%s/%s", MQTT_BASE_TOPIC, NODE_ID, suffix);
+    return mqtt_topic;
+}
+
 void publisherTask(void* arg)
 {
     QueueHandle_t q = (QueueHandle_t)arg;
@@ -80,7 +99,7 @@ void publisherTask(void* arg)
         {
             ensure_wifi();
             ensure_mqtt();
-
+            sync_time();
             // Keep MQTT client alive
             mqtt.loop();
 
@@ -89,9 +108,13 @@ void publisherTask(void* arg)
             char payload[512];
 
             int len = 0;
-            int w = snprintf(payload + len, sizeof(payload) - len, "{\"t_ms\":%lu", (unsigned long)m.t_ms);
-            if (w < 0 || w >= (int)(sizeof(payload) - len)) { Serial.println("JSON overflow!"); continue; }
-            len += w;
+            time_t now = time(nullptr);
+
+            int w = snprintf(payload + len, sizeof(payload) - len,
+                "{\"node\":\"%s\",\"epoch\":%lu,\"t_ms\":%lu",
+                NODE_ID,
+                (unsigned long)now,
+                (unsigned long)m.t_ms);
                      
                  // add CT channels (1 or 2)
             for (int i = 0; i < CT_COUNT; i++)
@@ -128,7 +151,7 @@ void publisherTask(void* arg)
             if (w < 0 || w >= (int)(sizeof(payload) - len)) { Serial.println("JSON overflow!"); continue; }
             len += w;
         // Publish to MQTT
-        mqtt.publish(MQTT_TOPIC, payload, MQTT_RETAIN);
+        mqtt.publish(buildTopic("metrics"), payload, MQTT_RETAIN);
         }
     }
 }
