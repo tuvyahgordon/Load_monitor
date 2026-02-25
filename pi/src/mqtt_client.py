@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from multiprocessing.resource_sharer import stop
 import time
 import signal
 from typing import Optional, Protocol
@@ -24,15 +25,18 @@ def run_forever(
     client_id: Optional[str] = None,
 ) -> None:
     running = True
-
+    print("[MQTT] run_forever entered", flush=True)
     def stop(*_):
         nonlocal running 
         running = False
         print("\n[EXIT] Stopping...")
 
     signal.signal(signal.SIGINT, stop)  # Handle Ctrl+C
-    signal.signal(signal.SIGTERM, stop) # Handle termination signal
-
+    #signal.signal(signal.SIGTERM, stop) # Handle termination signal
+    try:
+        signal.signal(signal.SIGTERM, stop)
+    except Exception:
+        pass
     def on_connect(client, userdata, flags, rc, properties=None):
         if rc == 0: # Connection successful
             print("[MQTT] Connected")

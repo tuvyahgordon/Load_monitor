@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # loads .env from current working dir
+except Exception:
+    pass
 
 def _env(key: str, default: str = "") -> str:
     v = os.getenv(key)
@@ -58,7 +62,7 @@ class AppConfig:
 
 def load_config() -> AppConfig:
     mqtt = MQTTConfig(
-        host=_env("MQTT_HOST", "127.0.0.1"), # the pi is running the MQTT broker locally by default
+        host=_env("MQTT_HOST", "10.32.133.163"), # the pi is running the MQTT broker locally by default
         port=_env_int("MQTT_PORT", 1883),
         user=_env("MQTT_USER", ""),
         password=_env("MQTT_PASS", ""),
