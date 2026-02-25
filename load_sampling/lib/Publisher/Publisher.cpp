@@ -24,6 +24,7 @@ static PubSubClient mqtt(wifiClient);
 
 static void ensure_wifi()
 {
+    Serial.println("Connecting WiFi...");
     if (WiFi.status() == WL_CONNECTED) return;
 
     WiFi.mode(WIFI_STA);
@@ -34,11 +35,18 @@ static void ensure_wifi()
     {
         vTaskDelay(pdMS_TO_TICKS(250));
     }
+    // Print local IP for diagnostics
+    Serial.println("WiFi connected");
+    Serial.println(WiFi.localIP());
 }
 
 static void sync_time()
 {
     configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+
+    // Set Israel timezone
+    setenv("TZ", "IST-2IDT,M3.4.4/26,M10.5.0", 1);
+    tzset();
 
     time_t now = time(nullptr);
     while (now < 100000)
@@ -50,6 +58,7 @@ static void sync_time()
 
 static void ensure_mqtt()
 {
+    Serial.println("Connecting MQTT...");
     mqtt.setServer(MQTT_HOST, MQTT_PORT);
 
     while (!mqtt.connected())
@@ -66,10 +75,17 @@ static void ensure_mqtt()
 
         if (!ok)
         {
+            Serial.print("MQTT connect failed, state=");
+            Serial.println(mqtt.state());
             // pause before retrying
             vTaskDelay(pdMS_TO_TICKS(1000));
         }
     }
+
+    // Print a message for diagnostics
+    Serial.println("MQTT connected");
+    Serial.print("MQTT state=");
+    Serial.println(mqtt.state());
 }
 
 static char mqtt_topic[128];
@@ -89,17 +105,26 @@ void publisherTask(void* arg)
         for (;;)
             vTaskDelay(pdMS_TO_TICKS(1000));
     }
-
+    ensure_wifi();
+    ensure_mqtt();
+    sync_time();
     NodeMetricsSnapshot m{};
 
     for (;;)
     {
-        // Wait for metrics from averager
-        if (xQueueReceive(q, &m, portMAX_DELAY) == pdTRUE)
+         // Maintain MQTT connection
+        if (!mqtt.connected())
         {
-            ensure_wifi();
+            Serial.println("MQTT lost. Reconnecting...");
             ensure_mqtt();
-            sync_time();
+        }
+
+        mqtt.loop();  // keep connection alive
+
+        // Wait for metrics from averager
+        if (xQueueReceive(q, &m, pdMS_TO_TICKS(200)) == pdTRUE)
+        {
+            
             // Keep MQTT client alive
             mqtt.loop();
 
@@ -115,7 +140,11 @@ void publisherTask(void* arg)
                 NODE_ID,
                 (unsigned long)now,
                 (unsigned long)m.t_ms);
-                     
+                if (w < 0 || w >= (int)(sizeof(payload) - len)) {
+                    Serial.println("JSON overflow!");
+                    continue;
+                }
+                len += w;
                  // add CT channels (1 or 2)
             for (int i = 0; i < CT_COUNT; i++)
             {
@@ -151,7 +180,17 @@ void publisherTask(void* arg)
             if (w < 0 || w >= (int)(sizeof(payload) - len)) { Serial.println("JSON overflow!"); continue; }
             len += w;
         // Publish to MQTT
-        mqtt.publish(buildTopic("metrics"), payload, MQTT_RETAIN);
+        bool ok = mqtt.publish(buildTopic("metrics"), payload, MQTT_RETAIN);
+
+        if (ok) {
+            // bare-minimum: one line per publish
+            Serial.printf("I=%.3f A | S=%.1f VA\n", m.irms[0], m.apparpower[0]);
+        } else {
+            // keep failures visible
+            Serial.printf("PUBLISH FAIL state=%d\n", mqtt.state());
         }
+        }
+        
     }
+    
 }

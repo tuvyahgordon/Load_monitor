@@ -66,22 +66,6 @@ for (;;)
 #endif
         }
         xQueueSend(a->q_out, &m, 0);
-        
-        // For now: show results in Serial Monitor
-        // (to remove this later and send to Pi instead)
-        
-        for (int i = 0; i < CT_COUNT; i++) 
-        {
-            Serial.print(" ct");
-            Serial.print(i + 1);
-            Serial.print("_rms=");
-            Serial.print(m.irms[i], 3);
-        }
-#if HAS_VOLTAGE
-        Serial.print(" vrms=");
-        Serial.print(m.vrms, 3);
-#endif
-        Serial.println();
     }
 }
 }

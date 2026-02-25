@@ -26,7 +26,7 @@
 
 // Pins (defaults for IntelliSense)
 #ifndef CT1_PIN
-#define CT1_PIN 34
+#define CT1_PIN 32
 #endif
 
 #ifndef CT2_PIN
@@ -34,11 +34,18 @@
 #endif
 
 #ifndef V_PIN
-#define V_PIN 32
+#define V_PIN 34
 #endif
 
 constexpr double MAINS_VRMS = 230;
-constexpr double ADC_TO_AMPS = 0.2; //to change, depending on the CT sensor and burden resistor used. 
+ 
+//Isecondary= Iprimary/1000 -> 
+//Vburden=Iprimary*Rburden -> Vburden=Iprimary*0.02 (assuming Rburden is 20ohm)
+//Iprimary=50(adc*3.3)/4095
+//=>
+//Iprimary =adc*0.0403
+
+constexpr double ADC_TO_AMPS = 0.0403; //Isecondary= Iprimary/1000 -> Vburden=Iprimary*Rburden -> Vburden=Iprimary*0.02 -> Iprimary= ADC counts = Vburden/3.3*4096, so ADC_TO_AMPS = 1000*3.3/(4096*Rburden). With Rburden=62ohm, this is about 0.0403 A per ADC count. Adjust Rburden for different CTs or to change the range/resolution.
 constexpr double ADC_TO_VOLTS = 3.3 / 4096.0; // 3.3V full scale, 12-bit ADC;
 
 // Sanity checks

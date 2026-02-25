@@ -2,3 +2,7 @@
 .vscode/
 # Secrets (WiFi, MQTT credentials)
 include/secrets.h
+.env
+*.env
+start_backend.bat
+start_backend.

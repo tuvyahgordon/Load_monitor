@@ -55,7 +55,7 @@ void samplerTask(void* arg) // freeRTOS task, arg will be NULL
             // ---- Sample ----
 #if HAS_VOLTAGE
             {
-                 = (float)analogRead(V_PIN);
+                rawv = (float)analogRead(V_PIN);
                 v_sum    += rawv;
                 v_sum_sq += rawv * rawv;
             }
@@ -71,8 +71,13 @@ void samplerTask(void* arg) // freeRTOS task, arg will be NULL
 #endif
             }
             // ---- End sample ----
-            }
-           
+            
+        } 
+        else 
+        {
+            vTaskDelay(1);
+            continue; // not time yet, yield to other tasks
+        }  
 
             n++;
 
@@ -97,8 +102,7 @@ void samplerTask(void* arg) // freeRTOS task, arg will be NULL
                 snap.v.sum    = v_sum;
                 snap.v.sum_sq = v_sum_sq;
 #endif 
-                xQueueSend(q, &snap, 0);   // non-blocking
-
+                xQueueSend(q, &snap, 0);
                 // Reset window
                 n = 0;
                 for (int i = 0; i < CT_COUNT; i++)
