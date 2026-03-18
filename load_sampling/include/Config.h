@@ -46,9 +46,27 @@ constexpr double MAINS_VRMS = 230;
 //Iprimary =adc*0.0403
 
 constexpr double ADC_TO_AMPS = 0.0403; //Isecondary= Iprimary/1000 -> Vburden=Iprimary*Rburden -> Vburden=Iprimary*0.02 -> Iprimary= ADC counts = Vburden/3.3*4096, so ADC_TO_AMPS = 1000*3.3/(4096*Rburden). With Rburden=62ohm, this is about 0.0403 A per ADC count. Adjust Rburden for different CTs or to change the range/resolution.
-constexpr double ADC_TO_VOLTS = 3.3 / 4096.0; // 3.3V full scale, 12-bit ADC;
+// ADC properties
+constexpr double ADC_REF = 3.3;
+constexpr double ADC_COUNTS = 4096.0;
 
-// Sanity checks
+// Voltage divider (100k / 10k)
+constexpr double VDIV_TOP = 100000.0;
+constexpr double VDIV_BOTTOM = 10000.0;
+constexpr double VDIV_GAIN = (VDIV_TOP + VDIV_BOTTOM) / VDIV_BOTTOM; // = 11
+
+// AC adapter ratio (approximate)
+constexpr double ACAC_RATIO = 230.0 / 9.0;  // adjust if needed
+
+// Calibration factor (tune after measuring with a multimeter)
+constexpr double V_CAL = 1.0;
+
+// Final conversion: ADC counts → mains volts
+constexpr double ADC_TO_VOLTS =
+    (ADC_REF / ADC_COUNTS) * VDIV_GAIN * ACAC_RATIO * V_CAL;
+
+
+    // Sanity checks
 #if CT_COUNT < 1 || CT_COUNT > 2
 #error "CT_COUNT must be 1 or 2"
 #endif

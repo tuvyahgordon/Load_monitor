@@ -25,15 +25,20 @@ for (;;)
         double vmean = 0.0;
 #if HAS_VOLTAGE
         const auto& v = statsnap.v;
-        if (v.n == 0) m.vrms = 0.0;
+        if (v.n == 0) 
+        {
+            m.vrms = 0.0;
+            vrms = 0.0;
+            vmean = 0.0;
+        }
         else
         {
-            const double vmean    = v.sum    / (double)v.n;
+             vmean    = v.sum    / (double)v.n;
             const double vmean_sq = v.sum_sq / (double)v.n;
             double vrms_sq = vmean_sq - vmean * vmean;
             if (vrms_sq < 0.0) vrms_sq = 0.0;
-            double vrms_adc = sqrt(vrms_sq);
-            double vrms = vrms_adc * ADC_TO_VOLTS;
+            const double vrms_adc = sqrt(vrms_sq);
+            vrms = vrms_adc * ADC_TO_VOLTS;
             m.vrms = vrms;
         }
 #endif
@@ -54,7 +59,19 @@ for (;;)
         double irms_sq = imean_sq - imean*imean; 
         if (irms_sq<0.0) irms_sq = 0.0;
         double irms_adc = sqrt(irms_sq);
-        double irms = irms_adc * ADC_TO_AMPS;
+        double irms_meas = irms_adc * ADC_TO_AMPS;
+
+        static constexpr double IRMS_FLOOR = 0.5; // empirical noise floor in amps, adjust as needed. This is subtracted in the RMS-squared domain to avoid over-correction at low currents.
+        
+       // subtract noise floor in RMS-squared domain
+        double irms_corr_sq = irms_meas * irms_meas - IRMS_FLOOR * IRMS_FLOOR;
+        if (irms_corr_sq < 0.0)
+        {
+                irms_corr_sq = 0.0;
+        }
+
+double irms = sqrt(irms_corr_sq);
+
         m.irms[i] = irms;
         m.apparpower[i] = irms * MAINS_VRMS; // calculate based on the given value for mains
 #if HAS_VOLTAGE
