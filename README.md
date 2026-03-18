@@ -3,6 +3,11 @@
 Non-invasive home energy monitoring system using ESP32 current transformers and a Raspberry Pi backend.
 
 ---
+## Motivation
+
+Understanding real energy usage at the device level is often difficult without intrusive or expensive equipment.
+
+This project was built independently to explore a simple, non-invasive approach to measuring and analyzing household power consumption using low-cost hardware.
 
 ## Overview
 
@@ -25,6 +30,12 @@ The system is designed for continuous 24/7 operation.
 ## Architecture
 
 ESP32 → MQTT Broker → Raspberry Pi → InfluxDB → Grafana
+
+![System Diagram](docs/architecture.png)
+
+## Hardware Implementation
+
+![Hardware Setup](docs/hardware_setup.png)
 
 ### ESP32 Layer
 - ADC sampling of CT sensors

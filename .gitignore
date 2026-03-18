@@ -1,0 +1,23 @@
+# ===== PlatformIO / ESP32 =====
+.pio/
+.vscode/
+
+# ===== Secrets =====
+include/secrets.h
+.env
+*.env
+
+# ===== Data / logs =====
+*.csv
+*.log
+
+# ===== Python (Pi side) =====
+__pycache__/
+*.pyc
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Optional =====
+*.code-workspace
