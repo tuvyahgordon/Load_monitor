@@ -189,6 +189,9 @@ void publisherTask(void* arg)
             // keep failures visible
             Serial.printf("PUBLISH FAIL state=%d\n", mqtt.state());
         }
+        Serial.printf("irms:%.3f vrms:%.1f appar:%.1f real:%.1f PF:%.3f\n",
+        m.irms[0], m.vrms, m.apparpower[0], m.power[0],
+        m.power[0] / m.apparpower[0]);
         }
         
     }

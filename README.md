@@ -37,6 +37,13 @@ ESP32 → MQTT Broker → Raspberry Pi → InfluxDB → Grafana
 
 ![Hardware Setup](docs/hardware_setup.png)
 
+### Grafana Dashboard
+
+Example Grafana dashboard showing the power consumption of a household device (hot water urn).  
+The higher power level corresponds to “boil” mode (~2000 W, per manufacturer specifications), while the lower level reflects the “keep warm” mode.
+
+![Grafana Dashboard](docs/grafana.png)
+
 ### ESP32 Layer
 - ADC sampling of CT sensors
 - Biasing and signal conditioning

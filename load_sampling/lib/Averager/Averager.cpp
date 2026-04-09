@@ -72,13 +72,16 @@ for (;;)
 
 double irms = sqrt(irms_corr_sq);
 
+Serial.printf("CT%d: imean=%.2f imean_sq=%.2f irms_adc=%.2f irms_meas=%.3f irms=%.3f\n",
+              i + 1, imean, imean_sq, irms_adc, irms_meas, irms);
+
         m.irms[i] = irms;
         m.apparpower[i] = irms * MAINS_VRMS; // calculate based on the given value for mains
 #if HAS_VOLTAGE
         m.apparpower[i] = irms * vrms; // calculate with real vrms
         double mean_p = s.sum_p / s.n;
         double real_power_adc = mean_p - vmean * imean; // removes bias
-        double real_power = real_power_adc * ADC_TO_VOLTS * ADC_TO_AMPS;
+        double real_power = real_power_adc * ADC_TO_VOLTS * ADC_TO_AMPS; 
         m.power[i] = real_power;
 #endif
         }

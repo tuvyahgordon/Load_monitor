@@ -50,24 +50,30 @@ void samplerTask(void* arg) // freeRTOS task, arg will be NULL
         {
             next_sample_time += SAMPLE_PERIOD_US;
 
-            int rawv = 0; // declared before, because its needed outside of the HAS VOLTAGE also
+           float rawv = 0.0f;
 
-            // ---- Sample ----
 #if HAS_VOLTAGE
-            {
-                rawv = (float)analogRead(V_PIN);
-                v_sum    += rawv;
-                v_sum_sq += rawv * rawv;
-            }
- #endif
+        {
+        rawv = (float)analogRead(V_PIN);
+        v_sum    += rawv;
+        v_sum_sq += rawv * rawv;
+        }
+#endif
 
-            for (int i = 0; i < CT_COUNT; i++)
-            {
-                float rawi = (float)analogRead(CT_PINS[i]);
-                ct_sum[i]    += rawi;
-                ct_sum_sq[i] += rawi * rawi;
+for (int i = 0; i < CT_COUNT; i++)
+{
+        float rawi = (float)analogRead(CT_PINS[i]);
+        ct_sum[i]    += rawi;
+        ct_sum_sq[i] += rawi * rawi;
 #if HAS_VOLTAGE
-                ct_sum_p[i] += rawi *rawv;
+        //ct_sum_p[i] += rawi * rawv;
+        static float prev_v = 0.0f;
+        static constexpr float PHASECAL = 0.8f;
+
+        float v_phase = prev_v + PHASECAL * (rawv - prev_v);
+        prev_v = rawv;
+
+        ct_sum_p[i] += rawi * v_phase;
 #endif
             }
             // ---- End sample ----

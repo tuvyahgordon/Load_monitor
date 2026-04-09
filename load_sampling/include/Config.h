@@ -37,7 +37,9 @@
 #define V_PIN 34
 #endif
 
-constexpr double MAINS_VRMS = 230;
+
+
+constexpr double MAINS_VRMS = 240;
  
 //Isecondary= Iprimary/1000 -> 
 //Vburden=Iprimary*Rburden -> Vburden=Iprimary*0.02 (assuming Rburden is 20ohm)
@@ -45,7 +47,7 @@ constexpr double MAINS_VRMS = 230;
 //=>
 //Iprimary =adc*0.0403
 
-constexpr double ADC_TO_AMPS = 0.0403; //Isecondary= Iprimary/1000 -> Vburden=Iprimary*Rburden -> Vburden=Iprimary*0.02 -> Iprimary= ADC counts = Vburden/3.3*4096, so ADC_TO_AMPS = 1000*3.3/(4096*Rburden). With Rburden=62ohm, this is about 0.0403 A per ADC count. Adjust Rburden for different CTs or to change the range/resolution.
+constexpr double ADC_TO_AMPS = 0.0403;; //Isecondary= Iprimary/1000 -> Vburden=Iprimary*Rburden -> Vburden=Iprimary*0.02 -> Iprimary= ADC counts = Vburden/3.3*4096, so ADC_TO_AMPS = 1000*3.3/(4096*Rburden). With Rburden=62ohm, this is about 0.0403 A per ADC count. Adjust Rburden for different CTs or to change the range/resolution.
 // ADC properties
 constexpr double ADC_REF = 3.3;
 constexpr double ADC_COUNTS = 4096.0;
@@ -56,10 +58,10 @@ constexpr double VDIV_BOTTOM = 10000.0;
 constexpr double VDIV_GAIN = (VDIV_TOP + VDIV_BOTTOM) / VDIV_BOTTOM; // = 11
 
 // AC adapter ratio (approximate)
-constexpr double ACAC_RATIO = 230.0 / 9.0;  // adjust if needed
+constexpr double ACAC_RATIO = 240.0 / 10.6;  // adjust if needed
 
 // Calibration factor (tune after measuring with a multimeter)
-constexpr double V_CAL = 1.0;
+constexpr double V_CAL = 0.89;
 
 // Final conversion: ADC counts → mains volts
 constexpr double ADC_TO_VOLTS =
